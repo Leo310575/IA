@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorageOrig from "@react-native-async-storage/async-storage";
+
+// Safe wrapper - some environments may not have AsyncStorage native module
+const AsyncStorage = AsyncStorageOrig || {
+  getItem: async () => null,
+  setItem: async () => {},
+  removeItem: async () => {},
+};
 
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
@@ -13,10 +20,12 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     (async () => {
-      const t = await AsyncStorage.getItem("token");
-      const u = await AsyncStorage.getItem("user");
-      if (t) setToken(t);
-      if (u) setUser(JSON.parse(u));
+      try {
+        const t = await AsyncStorage.getItem("token");
+        const u = await AsyncStorage.getItem("user");
+        if (t) setToken(t);
+        if (u) setUser(JSON.parse(u));
+      } catch (_e) {}
       setReady(true);
     })();
   }, []);
@@ -34,16 +43,20 @@ export const AuthProvider = ({ children }) => {
     const data = await res.json();
     setToken(data.token);
     setUser(data.user);
-    await AsyncStorage.setItem("token", data.token);
-    await AsyncStorage.setItem("user", JSON.stringify(data.user));
+    try {
+      await AsyncStorage.setItem("token", data.token);
+      await AsyncStorage.setItem("user", JSON.stringify(data.user));
+    } catch (_e) {}
     return data.user;
   };
 
   const logout = async () => {
     setToken(null);
     setUser(null);
-    await AsyncStorage.removeItem("token");
-    await AsyncStorage.removeItem("user");
+    try {
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("user");
+    } catch (_e) {}
   };
 
   return (

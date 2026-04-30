@@ -84,12 +84,12 @@ export default function Dashboard() {
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.hi}>Hola,</Text>
-            <Text style={styles.name} testID="dashboard-username">{user?.name || "Usuario"}</Text>
-            <Text style={styles.role}>
-              {user?.role === "admin" ? "Administrador" : "Cajero"}
+            <Text style={styles.name} testID="dashboard-name">{user?.name || "Usuario"}</Text>
+            <Text style={styles.role} testID="dashboard-role">
+              {user?.role === "admin" ? "Cuenta administrador" : "Cuenta cajero"}
             </Text>
           </View>
-          <TouchableOpacity testID="logout-button" onPress={logout} style={styles.iconBtn}>
+          <TouchableOpacity testID="logout-button" accessibilityLabel="logout-btn" onPress={logout} style={styles.iconBtn}>
             <Ionicons name="log-out-outline" size={22} color={COLORS.text} />
           </TouchableOpacity>
         </View>
@@ -113,7 +113,7 @@ export default function Dashboard() {
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>VENTAS HOY</Text>
-            <Text style={styles.statVal} testID="stat-sales-today">${(summary.sales_total || 0).toFixed(2)}</Text>
+            <Text style={styles.statVal} testID="dashboard-sales-today">${(summary.sales_total || 0).toFixed(2)}</Text>
             <Text style={styles.statSub}>{summary.sales_count || 0} transacciones</Text>
           </View>
           <View style={styles.statCard}>

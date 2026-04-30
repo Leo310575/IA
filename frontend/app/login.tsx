@@ -57,6 +57,7 @@ export default function Login() {
             <Text style={styles.label}>EMAIL</Text>
             <TextInput
               testID="login-email-input"
+              accessibilityLabel="login-email"
               style={styles.input}
               value={email}
               onChangeText={setEmail}
@@ -69,6 +70,7 @@ export default function Login() {
             <Text style={[styles.label, { marginTop: 16 }]}>CONTRASEÑA</Text>
             <TextInput
               testID="login-password-input"
+              accessibilityLabel="login-password"
               style={styles.input}
               value={password}
               onChangeText={setPassword}
@@ -79,6 +81,7 @@ export default function Login() {
 
             <TouchableOpacity
               testID="login-submit-button"
+              accessibilityLabel="login-submit"
               style={[styles.btn, loading && { opacity: 0.6 }]}
               onPress={onSubmit}
               disabled={loading}

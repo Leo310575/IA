@@ -227,6 +227,7 @@ export default function Venta() {
           <Ionicons name="search" size={18} color={COLORS.textMuted} />
           <TextInput
             testID="product-search-input"
+            accessibilityLabel="venta-search"
             style={styles.searchInput}
             placeholder="Buscar producto o código..."
             placeholderTextColor={COLORS.textMuted}
@@ -236,6 +237,7 @@ export default function Venta() {
         </View>
         <TouchableOpacity
           testID="scan-button"
+          accessibilityLabel="venta-scan-btn"
           style={styles.scanBtn}
           onPress={() => setShowScanner(true)}
         >
@@ -257,6 +259,7 @@ export default function Venta() {
       {cart.length > 0 && (
         <TouchableOpacity
           testID="cart-fab"
+          accessibilityLabel="cart-checkout"
           style={styles.fab}
           onPress={() => setShowCart(true)}
         >

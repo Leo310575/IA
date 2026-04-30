@@ -66,6 +66,7 @@ export default function Gastos() {
           <Text style={styles.lbl}>CONCEPTO</Text>
           <TextInput
             testID="expense-concept"
+            accessibilityLabel="gastos-concept"
             style={styles.input}
             value={concept}
             onChangeText={setConcept}
@@ -75,6 +76,7 @@ export default function Gastos() {
           <Text style={[styles.lbl, { marginTop: 12 }]}>MONTO</Text>
           <TextInput
             testID="expense-amount"
+            accessibilityLabel="gastos-amount"
             style={[styles.input, { fontSize: 22, fontWeight: "700" }]}
             value={amount}
             onChangeText={setAmount}

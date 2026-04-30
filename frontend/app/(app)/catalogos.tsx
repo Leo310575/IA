@@ -143,6 +143,7 @@ export default function Catalogos() {
           <TouchableOpacity
             key={t.id}
             testID={`tab-${t.id}`}
+            accessibilityLabel={`cat-tab-${t.id === "products" ? "productos" : t.id === "companies" ? "empresas" : t.id === "stores" ? "tiendas" : "usuarios"}`}
             onPress={() => setTab(t.id)}
             style={[styles.tab, tab === t.id && styles.tabActive]}
           >

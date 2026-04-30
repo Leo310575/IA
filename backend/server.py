@@ -545,7 +545,7 @@ async def seed_data():
     await db.users.insert_one({
         "id": str(uuid.uuid4()),
         "email": admin_email,
-        "name": "Administrador",
+        "name": "Juan Pérez",
         "role": "admin",
         "company_id": company_id,
         "store_id": store_id,
@@ -555,7 +555,7 @@ async def seed_data():
     await db.users.insert_one({
         "id": str(uuid.uuid4()),
         "email": cajero_email,
-        "name": "Cajero Demo",
+        "name": "María López",
         "role": "cajero",
         "company_id": company_id,
         "store_id": store_id,

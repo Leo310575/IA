@@ -28,6 +28,7 @@ export default function AppLayout() {
         name="dashboard"
         options={{
           title: "Inicio",
+          tabBarTestID: "tab-dashboard",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
           ),
@@ -37,6 +38,7 @@ export default function AppLayout() {
         name="venta"
         options={{
           title: "Venta",
+          tabBarTestID: "tab-venta",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "cart" : "cart-outline"} size={24} color={color} />
           ),
@@ -46,6 +48,7 @@ export default function AppLayout() {
         name="catalogos"
         options={{
           title: "Catálogos",
+          tabBarTestID: "tab-catalogos",
           href: isAdmin ? "/(app)/catalogos" : null,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "albums" : "albums-outline"} size={22} color={color} />
@@ -56,6 +59,7 @@ export default function AppLayout() {
         name="gastos"
         options={{
           title: "Gastos",
+          tabBarTestID: "tab-gastos",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "wallet" : "wallet-outline"} size={22} color={color} />
           ),
@@ -65,6 +69,7 @@ export default function AppLayout() {
         name="reportes"
         options={{
           title: "Reportes",
+          tabBarTestID: "tab-reportes",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "stats-chart" : "stats-chart-outline"} size={22} color={color} />
           ),

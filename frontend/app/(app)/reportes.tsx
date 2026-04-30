@@ -60,6 +60,7 @@ export default function Reportes() {
             <TouchableOpacity
               key={r.id}
               testID={`range-${r.id}`}
+              accessibilityLabel={`rep-filter-${r.id === "today" ? "hoy" : r.id === "week" ? "7d" : r.id === "month" ? "30d" : "todo"}`}
               onPress={() => setRange(r.id)}
               style={[styles.chip, range === r.id && styles.chipActive]}
             >

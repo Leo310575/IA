@@ -1,0 +1,34 @@
+{
+  "summary": "Frontend re-test (iteration 2). All testIDs from review_request are now present and functional. Flows verified end-to-end: admin login → dashboard (Juan Pérez / Cuenta administrador / dashboard-sales-today / sync-status-bar / 4 tiles / logout-button) → Venta (6 product cards, search, scan-button, tap product → cart-fab) → Scanner modal (manual barcode 7501055309627 adds Coca Cola) → Cart modal (qty-plus/minus) → checkout-button → payment-modal (efectivo + cash-received-input) → ticket-modal (print-button + new-sale-button). Catálogos: 4 sub-tabs (tab-products/companies/stores/users), 6 product rows, add-button opens form with save-button and wholesale-switch (toggle works). Gastos: expense-concept/amount/notes/save creates row visible in list. Reportes: range-today/week/month/all chips all switch filter, report-sales-total renders. Logout clears session and returns to login. Cajero login (cajero@pos.com): name='María López', role='Cuenta cajero', tile-catalogos hidden, bottom tab Catálogos hidden (4 tabs only).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/auth/login", "issue": "After Mongo pos_database was dropped in this iteration setup, seed_data() did not auto-rerun until backend was restarted (FastAPI startup hook ran on first boot only). Restarted backend manually to re-seed. Recommend a healthcheck or idempotent seed on every startup."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "(app)/_layout.tsx", "issue": "Bottom-tab tabBarTestID prop on Tabs.Screen is NOT propagated to web DOM. <a role='tab'> elements have no data-testid attribute, so [data-testid='tab-venta' | tab-dashboard | tab-catalogos | tab-gastos | tab-reportes] selectors do not match in web preview. Tabs are functional via text/role. Works on native; web needs a workaround (e.g., wrap each Tabs.Screen with a custom tabBarButton that passes testID).", "testID": "tab-*", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_pos_api.py", "/app/test_reports/pytest/pytest_results.xml", "/app/test_reports/iteration_1.json"],
+  "action_items": [
+    "Make seed_data() idempotent or run on every startup so dropping the database is automatically recovered (currently it ran but only because backend was restarted; in production a deploy without restart would leave DB empty after drop).",
+    "Workaround tabBarTestID web limitation: provide a custom tabBarButton in Tabs.Screen options that renders a Pressable with testID, or use tabBarAccessibilityLabel + role-based selectors in tests as the agreed contract."
+  ],
+  "critical_code_review_comments": [
+    "server.py @app.on_event('startup'/'shutdown') is deprecated in FastAPI; migrate to lifespan context.",
+    "Low-stock threshold and other thresholds appear hardcoded in server.py; consider env vars.",
+    "Frontend uses programmatic .click() to bypass occasional 'Element is outside of the viewport' on web; this is a Playwright/RNW interaction quirk, not a product bug, but tests should standardize on JS-click for RNW pressables in modals."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (auth login admin+cajero verified live; full pytest 17/17 from iteration_1 still applicable)", "frontend": "~95% (every testID in the spec was located and exercised; only the bottom-tab tabBarTestID does not render to web DOM)"},
+  "seed_data_creation": "Did not create new seed; backend restart re-ran seed_data() to repopulate Juan Pérez admin, María López cajero, 1 empresa, 1 tienda, 6 productos. Test created TEST_renta expense and 1-2 TEST sales via cash payment.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All flows green. Only outstanding item is tabBarTestID not surfacing as data-testid on web; tests should fall back to page.get_by_role('tab', name='Venta'|'Catálogos'|...) for bottom-tab navigation. Use JS .click() (page.evaluate) for buttons inside RN modals when 'Element is outside of the viewport' errors appear with native Playwright clicks.",
+  "rca_of_issue": "Initial admin login returned 401 because pos_database collections were dropped in setup but FastAPI startup seeding had already run on the previous boot (count_documents>0 short-circuit could not save us since the collections were now empty AND running process was not restarted). Restarting backend triggered seed_data() which detected 0 companies and re-inserted users+products. Mitigation: convert seed_data into an idempotent upsert and run it on a periodic background task or an admin endpoint, OR have it run inside lifespan startup so any reload re-checks."
+}
