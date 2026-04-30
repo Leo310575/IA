@@ -1,0 +1,41 @@
+{
+  "summary": "Backend: 17/17 pytest passed (auth, RBAC, products, barcode, sales+stock dec, expenses, reports, sync dedup). Frontend: app loads, admin login works (form prefilled with demo creds), dashboard renders with name/sales-today/expenses-today/4 action tiles, bottom-tab nav (Inicio/Venta/Catálogos/Gastos/Reportes), Venta shows 6 product cards with photos+stock and tap adds product to a bottom 'Cobrar' bar showing qty/total. CRITICAL ISSUE: most testIDs declared in review_request are MISSING from components, blocking automated UI testing for cart-modal, payment-modal, scanner-modal, catálogos sub-tabs, reportes filters, logout, tab bar, etc. Functionally happy path appears to work but deeper interactions could not be verified through testIDs.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "login.tsx", "issue": "missing testIDs: login-email, login-password, login-submit, demo-admin/demo-cajero chips not present (only static info card)", "testID": "login-*", "priority": "HIGH"},
+      {"component": "dashboard.tsx", "issue": "missing testIDs: dashboard-name, dashboard-role, dashboard-sales-today, logout-btn (icon top-right exists but no testID)", "testID": "dashboard-*", "priority": "HIGH"},
+      {"component": "(app)/_layout.tsx tab bar", "issue": "tab-dashboard/tab-venta/tab-catalogos/tab-gastos/tab-reportes testIDs missing on Tabs.Screen options", "testID": "tab-*", "priority": "HIGH"},
+      {"component": "venta.tsx", "issue": "missing venta-search, venta-scan-btn, cart-fab, cart-modal, cart-checkout, payment-modal, payment-close, scanner-modal, scanner-close. Cart UX uses inline bottom 'Cobrar' bar (no FAB+modal as spec'd). product-card-{id} testIDs DO exist (6 found).", "testID": "venta-*, cart-*, payment-*, scanner-*", "priority": "HIGH"},
+      {"component": "catalogos.tsx", "issue": "cat-tab-productos/empresas/tiendas/usuarios testIDs missing - could not verify 4-tab structure", "testID": "cat-tab-*", "priority": "MEDIUM"},
+      {"component": "reportes.tsx", "issue": "reportes-screen + rep-filter-hoy/7d/30d/todo testIDs missing", "testID": "reportes-*, rep-filter-*", "priority": "MEDIUM"},
+      {"component": "gastos.tsx", "issue": "gastos-concept, gastos-amount testIDs not verified (gastos-screen also missing)", "testID": "gastos-*", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [
+      {"flow": "Cart -> Checkout -> Payment -> Ticket", "issue": "Could not exercise via testIDs. Bottom 'Cobrar' bar visible after add-to-cart; full payment+ticket flow unverified.", "affected_testIDs": ["cart-fab","cart-modal","cart-checkout","payment-modal"]},
+      {"flow": "Scanner manual entry of 7501055309627", "issue": "scanner-modal testID missing; barcode lookup endpoint itself works (tested).", "affected_testIDs": ["venta-scan-btn","scanner-modal"]},
+      {"flow": "Logout + cajero re-login + verify catálogos hidden", "issue": "logout-btn testID missing; could not automate. Backend role gating verified (cajero 403 on /users, /products POST, /companies POST).", "affected_testIDs": ["logout-btn","logout-confirm","tab-catalogos"]}
+    ],
+    "design_issues": [
+      {"screen": "dashboard", "issues": ["'Administrador' shown twice (name + role label both render 'Administrador')"]}
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_pos_api.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Add testID props (review_request lists) to login form, dashboard header/logout, bottom Tabs.Screen options, venta search/scan/cart FAB, cart modal & buttons, payment modal & buttons, scanner modal & buttons, catálogos sub-tabs, gastos inputs, reportes filters.",
+    "Decide cart UX: spec says cart-fab + cart-modal but current impl uses inline bottom 'Cobrar' bar. Either align spec or update testID names.",
+    "Optional: add demo-admin/demo-cajero quick-fill chips on login (currently only a static info card with credentials text)."
+  ],
+  "critical_code_review_comments": [
+    "server.py: low_stock threshold hardcoded to <=5 - consider configurable.",
+    "server.py uses deprecated @app.on_event startup/shutdown (FastAPI now recommends lifespan)."
+  ],
+  "updated_files": ["/app/backend/tests/test_pos_api.py"],
+  "success_rate": {"backend": "100% (17/17)", "frontend": "~40% (login + dashboard + venta product list verified; deeper modals + reports + catálogos sub-tabs blocked by missing testIDs)"},
+  "seed_data_creation": "None. Used existing seed (admin@pos.com, cajero@pos.com, 1 empresa, 1 tienda, 6 productos). Tests created TEST_-prefixed sales/expenses for dedup checks.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend rock solid. Once main agent adds the listed testID props, re-run UI flows: (1) admin login via login-submit, (2) dashboard tiles + logout, (3) venta -> tap product -> cart-fab -> cart-modal -> cart-checkout -> payment-modal (efectivo + tarjeta) -> ticket, (4) scanner-modal accept barcode 7501055309627, (5) catálogos 4 tabs CRUD, (6) gastos create + appears in list, (7) reportes filters hoy/7d/30d/todo, (8) cajero login -> tab-catalogos hidden.",
+  "rca_of_issue": "testIDs were specified in the review_request but not implemented in the screens/components. Without them Playwright cannot reliably select React Native primitives in web preview. Functional smoke (visible text + screenshots) confirms the UI exists and basic add-to-cart works."
+}
