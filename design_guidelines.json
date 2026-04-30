@@ -1,0 +1,153 @@
+{
+  "theme_and_archetype": {
+    "theme": "Light",
+    "archetype": "Archetype 4 (Swiss & High-Contrast)",
+    "rationale": "For a fast-paced POS environment, high contrast and objective clarity are essential. The design follows a 'Stripe/Square' modern paradigm. It uses stark white backgrounds, dense functionality with breathing room, and a strong primary color to guide cashier actions."
+  },
+  "global_rules": {
+    "language": "es",
+    "offline_first": true,
+    "platform": "React Native Expo",
+    "file_extension": ".js",
+    "testing_attribute": "data-testid"
+  },
+  "brand_colors": {
+    "background_primary": "#FFFFFF",
+    "background_secondary": "#F8FAFC",
+    "background_tertiary": "#F1F5F9",
+    "primary": "#4F46E5",
+    "primary_active": "#4338CA",
+    "text_primary": "#0F172A",
+    "text_secondary": "#475569",
+    "text_tertiary": "#94A3B8",
+    "border_color": "#E2E8F0",
+    "semantic_success": "#10B981",
+    "semantic_error": "#EF4444",
+    "semantic_warning": "#F59E0B"
+  },
+  "typography": {
+    "heading_font": "System Default Bold / Outfit",
+    "body_font": "System Default / SF Pro / Roboto",
+    "scales": {
+      "h1": { "size": 32, "weight": "800", "tracking": -1 },
+      "h2": { "size": 24, "weight": "700", "tracking": -0.5 },
+      "h3": { "size": 20, "weight": "600" },
+      "body_lg": { "size": 18, "weight": "400" },
+      "body": { "size": 16, "weight": "400" },
+      "caption": { "size": 13, "weight": "500", "textTransform": "uppercase", "tracking": 1 }
+    },
+    "rules": [
+      "Headings must never use 'Inter' or generic sans; use System bold with tight tracking.",
+      "Labels must be uppercase and small (caption scale) for high legibility.",
+      "Never center align body text. Always left align dense data."
+    ]
+  },
+  "spacing_and_layout": {
+    "base_unit": 4,
+    "screen_padding": 16,
+    "touch_targets": {
+      "min_height": 48,
+      "min_width": 48
+    },
+    "grid_patterns": {
+      "pos_product_grid": "2 columns with gap-4 on mobile, 3 columns on tablet/landscape",
+      "list_items": "Horizontal row layout with justify-between and flex-row"
+    },
+    "surface_strategies": {
+      "cards": "Flat background (#FFFFFF), 1px border (#E2E8F0), rounded-xl, no heavy shadows. Add slight elevation shadow only on active states.",
+      "bottom_sheet": "For cart and payment summary. Sharp top-left and top-right radius (rounded-t-2xl), subtle shadow."
+    }
+  },
+  "ui_components": {
+    "button_primary": {
+      "background": "primary",
+      "text_color": "#FFFFFF",
+      "border_radius": 12,
+      "height": 56,
+      "font_weight": "700"
+    },
+    "button_secondary": {
+      "background": "transparent",
+      "border": "1px solid border_color",
+      "text_color": "text_primary",
+      "border_radius": 12,
+      "height": 56
+    },
+    "text_input": {
+      "background": "background_secondary",
+      "border": "1px solid border_color",
+      "border_radius": 12,
+      "padding": 16,
+      "height": 56
+    },
+    "badge": {
+      "padding_horizontal": 8,
+      "padding_vertical": 4,
+      "border_radius": 9999,
+      "font_size": 12,
+      "font_weight": "600"
+    }
+  },
+  "icons": {
+    "library": "@expo/vector-icons (Feather or Ionicons)",
+    "rules": [
+      "Use bold/solid icons for active states, outlined/light for inactive.",
+      "Stroke width must be consistent (e.g., 2px)."
+    ]
+  },
+  "screens": {
+    "Login": {
+      "layout": "Centered form, logo top, massive input fields. 1px bordered inputs.",
+      "features": ["Email/Pass inputs", "Google Auth CTA", "Offline status indicator"]
+    },
+    "Home_Dashboard": {
+      "layout": "Grid of quick action tiles (Venta, Catálogos, Reportes, Gastos).",
+      "features": ["Welcome header", "Sync status (online/offline)", "Bento grid structure"]
+    },
+    "POS_Sales": {
+      "layout": "Split layout (tablet) or stack layout (mobile). Top/center: Product grid with image thumbnails. Bottom: Persistent Cart summary button. Top Right: Barcode scanner icon.",
+      "features": ["Category filter chips", "Product cards (photo, price, unit type)", "Barcode/QR scan CTA"]
+    },
+    "Cart_Checkout": {
+      "layout": "Bottom sheet or dedicated screen. List of items. Large total amount.",
+      "features": ["Quantity controls (+/- or numpad for kg/liters)", "Wholesale tag", "Pay by Cash / Pay by Card via terminal buttons"]
+    },
+    "Catalogs_CRUD": {
+      "layout": "List view with search bar. Sticky bottom 'Add New' button.",
+      "features": ["Stock indicators (Red for low stock)", "Photo thumbnails"]
+    },
+    "Reports": {
+      "layout": "Data-heavy. Sharp lines, no cards (border-collapse style).",
+      "features": ["Date range picker", "Sales total", "Inventory summary", "Expenses list"]
+    }
+  },
+  "motion_and_interactions": {
+    "transitions": "Use React Native LayoutAnimation or Reanimated for smooth list updates and cart expansion.",
+    "feedback": "Haptic feedback (Vibration) MANDATORY on adding item to cart and successful payment.",
+    "loading": "Use skeleton loaders instead of spinners for catalogs."
+  },
+  "testing": {
+    "attributes": [
+      "All interactive and key informational elements MUST include a `testID` (for React Native) and `data-testid` attribute.",
+      "Convention: kebab-case, role-based. e.g. `data-testid='login-submit-button'`"
+    ]
+  },
+  "image_urls": {
+    "description": "Stable Unsplash URLs to seed the local DB for testing and UI mockups. Do not use blank placeholders.",
+    "product_1": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=500&q=80",
+    "product_2": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80",
+    "product_3": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=500&q=80",
+    "avatar_cajero": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=250&q=80",
+    "store_cover": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80"
+  },
+  "instructions_to_main_agent": [
+    "Build standard React Native `.js` files using standard StyleSheet or NativeWind if configured.",
+    "Use `@expo/vector-icons` for all iconography.",
+    "Ensure all text is in Spanish.",
+    "For the POS cart input (kg, liters, piezas), ensure the numerical keyboard opens and accepts decimals for kg/liters, but only integers for piezas.",
+    "Implement an offline-first architecture (e.g., using AsyncStorage, WatermelonDB, or SQLite) and handle sync logic when internet is restored.",
+    "Use `data-testid` (and `testID`) on all interactive and key informational elements.",
+    "Keep styling high-contrast and minimalist. Avoid drop shadows on everything; use 1px borders (#E2E8F0) to define sections.",
+    "For the POS printer, mock the bluetooth logic but build the complete UI/UX for ticket preview."
+  ]
+}
