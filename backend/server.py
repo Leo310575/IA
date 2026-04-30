@@ -516,7 +516,10 @@ async def startup():
 
 
 async def seed_data():
-    if await db.companies.count_documents({}) > 0:
+    # Idempotent: seed missing entities without failing when some exist
+    if await db.users.count_documents({"email": os.environ["ADMIN_EMAIL"].lower()}) > 0 \
+       and await db.companies.count_documents({}) > 0 \
+       and await db.products.count_documents({}) > 0:
         return
     logger.info("Seeding demo data...")
 
