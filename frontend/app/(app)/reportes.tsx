@@ -1,10 +1,11 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Platform, Alert, Modal } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Platform, Alert, Modal, KeyboardAvoidingView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useAuth, apiFetch } from "../../src/auth";
 import { useTheme } from "../../src/theme";
+import { buildReportHtml, generatePdf, sharePdf, emailReport, smsReport } from "../../src/share";
 
 const RANGES = [
   { id: "today", label: "Hoy" },
@@ -57,6 +58,10 @@ export default function Reportes() {
   const [refreshing, setRefreshing] = useState(false);
   const [showPrint, setShowPrint] = useState(false);
   const [printLines, setPrintLines] = useState([]);
+  const [shareMode, setShareMode] = useState(null); // 'email' | 'sms' | null
+  const [contact, setContact] = useState("");
+  const [pdfUri, setPdfUri] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!user?.store_id || !token) return;
@@ -101,6 +106,7 @@ export default function Reportes() {
     });
     lines.push("========================");
     setPrintLines(lines);
+    setPdfUri(null); // reset cached pdf
     setShowPrint(true);
   };
 
@@ -110,6 +116,65 @@ export default function Reportes() {
       "Reporte enviado a impresora Bluetooth.\n(Simulado en preview — funcionará con hardware real al compilar APK/IPA.)"
     );
     setShowPrint(false);
+  };
+
+  const ensurePdf = async () => {
+    if (pdfUri) return pdfUri;
+    if (Platform.OS === "web") {
+      Alert.alert(
+        "Disponible en móvil",
+        "Generar PDF y compartir / email / SMS sólo funciona en la app instalada (Android/iOS). En el preview web puedes usar 'Imprimir Bluetooth'."
+      );
+      return null;
+    }
+    setBusy(true);
+    try {
+      const html = buildReportHtml(printLines, "Reporte POS");
+      const uri = await generatePdf(html);
+      setPdfUri(uri);
+      return uri;
+    } catch (e) {
+      Alert.alert("Error", "No se pudo generar el PDF: " + e.message);
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onShare = async () => {
+    const uri = await ensurePdf();
+    if (!uri) return;
+    try { await sharePdf(uri); } catch (e) { Alert.alert("Error", e.message); }
+  };
+
+  const onEmail = () => { setShareMode("email"); setContact(""); };
+  const onSms = () => { setShareMode("sms"); setContact(""); };
+
+  const sendByEmail = async () => {
+    const uri = await ensurePdf();
+    if (!uri) { setShareMode(null); return; }
+    const ok = await emailReport(
+      uri,
+      contact.trim(),
+      "Reporte POS",
+      "Adjunto el reporte de ventas, gastos e inventario.\n\nGenerado por POS Pro."
+    );
+    if (ok) Alert.alert("Listo", "Se abrió el redactor de correo.");
+    setShareMode(null);
+  };
+
+  const sendBySms = async () => {
+    if (!contact.trim()) { Alert.alert("Falta número", "Ingresa el número del cliente."); return; }
+    const lbl = RANGES.find((r) => r.id === range)?.label || "";
+    const summary =
+      `Reporte POS (${lbl})\n` +
+      `Ventas: $${(data?.sales_total || 0).toFixed(2)} (${data?.sales_count || 0})\n` +
+      `Gastos: $${(data?.expenses_total || 0).toFixed(2)}\n` +
+      `Utilidad: $${(data?.net || 0).toFixed(2)}\n` +
+      `Inventario: $${(data?.inventory_value || 0).toFixed(2)}`;
+    const ok = await smsReport(contact.trim(), summary);
+    if (ok) Alert.alert("Listo", "Se abrió el redactor de SMS.");
+    setShareMode(null);
   };
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
@@ -335,7 +400,7 @@ export default function Reportes() {
             </ScrollView>
             <View style={styles.printActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowPrint(false)}>
-                <Text style={styles.cancelTxt}>Cancelar</Text>
+                <Text style={styles.cancelTxt}>Cerrar</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 testID="send-to-printer-button"
@@ -343,11 +408,66 @@ export default function Reportes() {
                 onPress={sendToPrinter}
               >
                 <Ionicons name="bluetooth-outline" size={18} color="#fff" />
-                <Text style={styles.sendTxt}>Imprimir Bluetooth</Text>
+                <Text style={styles.sendTxt}>Imprimir</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.shareRow}>
+              <TouchableOpacity testID="share-pdf-button" style={styles.shareBtn} onPress={onShare} disabled={busy}>
+                <Ionicons name="share-social-outline" size={20} color={COLORS.text} />
+                <Text style={styles.shareTxt}>Compartir PDF</Text>
+              </TouchableOpacity>
+              <TouchableOpacity testID="share-email-button" style={styles.shareBtn} onPress={onEmail} disabled={busy}>
+                <Ionicons name="mail-outline" size={20} color={COLORS.text} />
+                <Text style={styles.shareTxt}>Correo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity testID="share-sms-button" style={styles.shareBtn} onPress={onSms} disabled={busy}>
+                <Ionicons name="chatbubble-outline" size={20} color={COLORS.text} />
+                <Text style={styles.shareTxt}>SMS</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
+      </Modal>
+
+      {/* CONTACT MODAL (email / sms) */}
+      <Modal visible={!!shareMode} transparent animationType="fade" onRequestClose={() => setShareMode(null)}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.contactOverlay}>
+          <View style={styles.contactCard} testID="contact-modal">
+            <Text style={styles.contactTitle}>
+              {shareMode === "email" ? "Enviar por correo" : "Enviar por SMS"}
+            </Text>
+            <Text style={styles.contactSub}>
+              {shareMode === "email"
+                ? "Ingresa el correo del cliente. Se abrirá tu app de correo con el PDF adjunto."
+                : "Ingresa el número del cliente. Se abrirá tu app de SMS con el resumen del reporte."}
+            </Text>
+            <TextInput
+              testID="contact-input"
+              style={styles.contactInput}
+              value={contact}
+              onChangeText={setContact}
+              placeholder={shareMode === "email" ? "cliente@correo.com" : "+52 55 1234 5678"}
+              placeholderTextColor={COLORS.textMuted}
+              keyboardType={shareMode === "email" ? "email-address" : "phone-pad"}
+              autoCapitalize="none"
+              autoFocus
+            />
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShareMode(null)}>
+                <Text style={styles.cancelTxt}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID="contact-send"
+                style={styles.sendBtn}
+                onPress={shareMode === "email" ? sendByEmail : sendBySms}
+                disabled={busy}
+              >
+                <Ionicons name="paper-plane-outline" size={18} color="#fff" />
+                <Text style={styles.sendTxt}>{busy ? "Generando..." : "Enviar"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -447,4 +567,26 @@ const makeStyles = (COLORS) => StyleSheet.create({
     alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 6,
   },
   sendTxt: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  shareRow: {
+    flexDirection: "row", gap: 8, padding: 14, paddingTop: 0,
+  },
+  shareBtn: {
+    flex: 1, height: 56, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border,
+    alignItems: "center", justifyContent: "center", backgroundColor: COLORS.bg, gap: 4,
+  },
+  shareTxt: { color: COLORS.text, fontWeight: "600", fontSize: 11 },
+  contactOverlay: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center", justifyContent: "center", padding: 20,
+  },
+  contactCard: {
+    width: "100%", maxWidth: 420, backgroundColor: COLORS.bg, borderRadius: 16,
+    padding: 18, borderWidth: 1, borderColor: COLORS.border,
+  },
+  contactTitle: { fontSize: 18, fontWeight: "800", color: COLORS.text },
+  contactSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 6, lineHeight: 18 },
+  contactInput: {
+    height: 52, marginTop: 14, backgroundColor: COLORS.bg2, borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 12, paddingHorizontal: 14, color: COLORS.text, fontSize: 15,
+  },
 });
