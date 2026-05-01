@@ -55,6 +55,24 @@ export default function Gastos() {
     load();
   };
 
+  const remove = (item) => {
+    Alert.alert("Eliminar gasto", `¿Eliminar "${item.concept}" por $${item.amount.toFixed(2)}?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Eliminar",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await apiFetch(`/api/expenses/${item.id}`, { method: "DELETE" }, token);
+            load();
+          } catch (e) {
+            Alert.alert("Error", e.message);
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <SafeAreaView style={styles.c} testID="gastos-screen">
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
@@ -112,6 +130,14 @@ export default function Gastos() {
                 {!!item.notes && <Text style={styles.expNotes}>{item.notes}</Text>}
               </View>
               <Text style={styles.expAmt}>-${item.amount.toFixed(2)}</Text>
+              <TouchableOpacity
+                testID={`expense-delete-${item.id}`}
+                onPress={() => remove(item)}
+                style={styles.expDel}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons name="trash-outline" size={20} color={COLORS.error} />
+              </TouchableOpacity>
             </View>
           )}
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
@@ -151,5 +177,6 @@ const styles = StyleSheet.create({
   expDate: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
   expNotes: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
   expAmt: { fontSize: 16, fontWeight: "800", color: COLORS.error, marginLeft: 12 },
+  expDel: { marginLeft: 8, padding: 6, minWidth: 36, minHeight: 36, alignItems: "center", justifyContent: "center" },
   empty: { textAlign: "center", color: COLORS.textMuted, marginTop: 30 },
 });

@@ -400,6 +400,14 @@ async def create_expense(payload: ExpenseIn, user: dict = Depends(get_current_us
     return await insert_expense(payload, user["id"])
 
 
+@api_router.delete("/expenses/{eid}")
+async def delete_expense(eid: str, user: dict = Depends(get_current_user)):
+    res = await db.expenses.delete_one({"id": eid})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    return {"ok": True}
+
+
 @api_router.get("/expenses")
 async def list_expenses(
     store_id: Optional[str] = None,
