@@ -1,10 +1,10 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useAuth, apiFetch } from "../../src/auth";
-import { COLORS } from "../../src/theme";
+import { useTheme } from "../../src/theme";
 
 const RANGES = [
   { id: "today", label: "Hoy" },
@@ -46,6 +46,8 @@ const getRange = (id, customStart, customEnd) => {
 
 export default function Reportes() {
   const { user, token } = useAuth();
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [range, setRange] = useState("today");
   const today = new Date();
   const monthAgo = new Date(); monthAgo.setDate(today.getDate() - 30);
@@ -71,6 +73,38 @@ export default function Reportes() {
     if (range !== "custom") load();
   }, [range]);
 
+  const printReport = () => {
+    const lbl = RANGES.find((r) => r.id === range)?.label || "";
+    const lines = [];
+    lines.push("===== REPORTE POS =====");
+    lines.push(`Periodo: ${lbl}`);
+    if (range === "custom") lines.push(`Del ${customStart} al ${customEnd}`);
+    lines.push(`Generado: ${new Date().toLocaleString()}`);
+    lines.push("------------------------");
+    lines.push(`Ventas: $${(data?.sales_total || 0).toFixed(2)}  (${data?.sales_count || 0} trans.)`);
+    lines.push(`  Efectivo: $${(data?.cash_total || 0).toFixed(2)}`);
+    lines.push(`  Tarjeta:  $${(data?.card_total || 0).toFixed(2)}`);
+    lines.push(`Gastos:  $${(data?.expenses_total || 0).toFixed(2)}  (${data?.expenses_count || 0})`);
+    lines.push(`UTILIDAD: $${(data?.net || 0).toFixed(2)}`);
+    lines.push("------------------------");
+    lines.push("TOP PRODUCTOS:");
+    (data?.top_products || []).forEach((p, i) => {
+      lines.push(`${i + 1}. ${p.name} - ${p.qty} - $${p.total.toFixed(2)}`);
+    });
+    lines.push("------------------------");
+    lines.push(`INVENTARIO (${data?.inventory_count || 0})`);
+    lines.push(`Valor: $${(data?.inventory_value || 0).toFixed(2)}`);
+    (data?.inventory || []).slice(0, 30).forEach((p) => {
+      lines.push(`  ${p.name}: ${p.stock} ${p.unit_type}`);
+    });
+    lines.push("========================");
+    Alert.alert(
+      "Imprimir reporte",
+      "Enviando a impresora Bluetooth... (simulado en preview)\n\n" + lines.slice(0, 12).join("\n") + "\n...",
+      [{ text: "OK" }]
+    );
+  };
+
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
 
   const applyCustom = () => {
@@ -91,8 +125,16 @@ export default function Reportes() {
         contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <Text style={styles.title}>Reportes</Text>
-        <Text style={styles.sub}>Ventas, inventario y gastos</Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <View>
+            <Text style={styles.title}>Reportes</Text>
+            <Text style={styles.sub}>Ventas, inventario y gastos</Text>
+          </View>
+          <TouchableOpacity testID="print-report-button" onPress={printReport} style={styles.printBtn}>
+            <Ionicons name="print-outline" size={18} color="#fff" />
+            <Text style={styles.printBtnTxt}>Imprimir</Text>
+          </TouchableOpacity>
+        </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 18 }}>
           {RANGES.map((r) => (
@@ -261,7 +303,7 @@ export default function Reportes() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   c: { flex: 1, backgroundColor: COLORS.bg2 },
   title: { fontSize: 24, fontWeight: "800", color: COLORS.text, letterSpacing: -0.5 },
   sub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },

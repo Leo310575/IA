@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,12 +12,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth, apiFetch } from "../../src/auth";
-import { COLORS } from "../../src/theme";
+import { useTheme } from "../../src/theme";
 import { checkOnline, getQueue, syncQueue } from "../../src/sync";
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, token, logout } = useAuth();
+  const { colors: COLORS, mode, toggle } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [online, setOnline] = useState(true);
   const [pending, setPending] = useState(0);
   const [summary, setSummary] = useState({ sales_total: 0, sales_count: 0, expenses_total: 0 });
@@ -89,9 +91,24 @@ export default function Dashboard() {
               {user?.role === "admin" ? "Cuenta administrador" : "Cuenta cajero"}
             </Text>
           </View>
-          <TouchableOpacity testID="logout-button" accessibilityLabel="logout-btn" onPress={logout} style={styles.iconBtn}>
-            <Ionicons name="log-out-outline" size={22} color={COLORS.text} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <TouchableOpacity
+              testID="theme-toggle"
+              accessibilityLabel={mode === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+              onPress={toggle}
+              style={styles.iconBtn}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name={mode === "dark" ? "sunny-outline" : "moon-outline"}
+                size={22}
+                color={COLORS.text}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity testID="logout-button" accessibilityLabel="logout-btn" onPress={logout} style={styles.iconBtn}>
+              <Ionicons name="log-out-outline" size={22} color={COLORS.text} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View
@@ -147,7 +164,7 @@ export default function Dashboard() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   c: { flex: 1, backgroundColor: COLORS.bg2 },
   headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   hi: { fontSize: 14, color: COLORS.textSecondary },

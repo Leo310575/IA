@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -13,11 +13,13 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../src/auth";
-import { COLORS } from "../src/theme";
+import { useTheme } from "../src/theme";
 
 export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [email, setEmail] = useState("admin@pos.com");
   const [password, setPassword] = useState("admin123");
   const [loading, setLoading] = useState(false);
@@ -103,7 +105,7 @@ export default function Login() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   c: { flex: 1, backgroundColor: COLORS.bg },
   inner: { flex: 1, padding: 24, justifyContent: "center" },
   logoWrap: { alignItems: "center" },

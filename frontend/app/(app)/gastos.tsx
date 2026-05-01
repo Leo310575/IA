@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Alert,
   KeyboardAvoidingView, Platform,
@@ -7,11 +7,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useAuth, apiFetch } from "../../src/auth";
-import { COLORS } from "../../src/theme";
+import { useTheme } from "../../src/theme";
 import { checkOnline, queueOp } from "../../src/sync";
 
 export default function Gastos() {
   const { user, token } = useAuth();
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [concept, setConcept] = useState("");
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
@@ -149,7 +151,7 @@ export default function Gastos() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   c: { flex: 1, backgroundColor: COLORS.bg2 },
   head: { paddingHorizontal: 20, paddingTop: 12 },
   title: { fontSize: 24, fontWeight: "800", color: COLORS.text, letterSpacing: -0.5 },

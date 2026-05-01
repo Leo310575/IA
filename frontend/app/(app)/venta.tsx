@@ -7,11 +7,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useAuth, apiFetch } from "../../src/auth";
-import { COLORS } from "../../src/theme";
+import { useTheme } from "../../src/theme";
 import { checkOnline, queueOp, setCache, getCache } from "../../src/sync";
 
 export default function Venta() {
   const { user, token } = useAuth();
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState([]); // {product, quantity, is_wholesale}
@@ -613,7 +615,7 @@ export default function Venta() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   c: { flex: 1, backgroundColor: COLORS.bg2 },
   header: { flexDirection: "row", padding: 12, gap: 8, backgroundColor: COLORS.bg },
   searchBox: {

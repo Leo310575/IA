@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert,
   ScrollView, KeyboardAvoidingView, Platform, Switch,
@@ -7,7 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useAuth, apiFetch } from "../../src/auth";
-import { COLORS } from "../../src/theme";
+import { useTheme } from "../../src/theme";
 
 const TABS = [
   { id: "products", label: "Productos", icon: "cube" },
@@ -18,6 +18,8 @@ const TABS = [
 
 export default function Catalogos() {
   const { user, token } = useAuth();
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [tab, setTab] = useState("products");
   const [items, setItems] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -268,35 +270,43 @@ export default function Catalogos() {
   );
 }
 
-const Field = ({ label, ...props }) => (
-  <View style={{ marginBottom: 14 }}>
-    <Text style={styles.lbl}>{label.toUpperCase()}</Text>
-    <TextInput
-      style={styles.input}
-      placeholderTextColor={COLORS.textMuted}
-      {...props}
-    />
-  </View>
-);
+const Field = ({ label, ...props }) => {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={styles.lbl}>{label.toUpperCase()}</Text>
+      <TextInput
+        style={styles.input}
+        placeholderTextColor={COLORS.textMuted}
+        {...props}
+      />
+    </View>
+  );
+};
 
-const Picker = ({ label, value, options, onChange }) => (
-  <View style={{ marginBottom: 14 }}>
-    <Text style={styles.lbl}>{label.toUpperCase()}</Text>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
-      {options.map((o) => (
-        <TouchableOpacity
-          key={o.id}
-          onPress={() => onChange(o.id)}
-          style={[styles.choice, value === o.id && styles.choiceActive, { marginRight: 8 }]}
-        >
-          <Text style={[styles.choiceTxt, value === o.id && { color: "#fff" }]}>{o.name}</Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  </View>
-);
+const Picker = ({ label, value, options, onChange }) => {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={styles.lbl}>{label.toUpperCase()}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
+        {options.map((o) => (
+          <TouchableOpacity
+            key={o.id}
+            onPress={() => onChange(o.id)}
+            style={[styles.choice, value === o.id && styles.choiceActive, { marginRight: 8 }]}
+          >
+            <Text style={[styles.choiceTxt, value === o.id && { color: "#fff" }]}>{o.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   c: { flex: 1, backgroundColor: COLORS.bg2 },
   tabs: { flexDirection: "row", padding: 12, gap: 8, backgroundColor: COLORS.bg, borderBottomWidth: 1, borderColor: COLORS.border },
   tab: {

@@ -2,11 +2,12 @@ import React, { useEffect } from "react";
 import { Tabs, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../../src/auth";
-import { COLORS } from "../../src/theme";
+import { useTheme } from "../../src/theme";
 
 export default function AppLayout() {
   const router = useRouter();
   const { ready, token, user } = useAuth();
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (ready && !token) router.replace("/login");
@@ -18,9 +19,15 @@ export default function AppLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textMuted,
-        tabBarStyle: { borderTopColor: COLORS.border, height: 64, paddingTop: 6, paddingBottom: 8 },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: {
+          borderTopColor: colors.border,
+          backgroundColor: colors.bg,
+          height: 64,
+          paddingTop: 6,
+          paddingBottom: 8,
+        },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
       }}
     >
