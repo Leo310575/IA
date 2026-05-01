@@ -170,13 +170,18 @@ export default function Catalogos() {
         <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }}>
           <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
             <View style={styles.modalHead}>
-              <TouchableOpacity onPress={() => setShowForm(false)}>
+              <TouchableOpacity
+                testID="modal-close-button"
+                onPress={() => setShowForm(false)}
+                style={styles.modalCloseBtn}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
                 <Ionicons name="close" size={26} color={COLORS.text} />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>
                 {editing ? "Editar" : "Nuevo"} {TABS.find((t) => t.id === tab)?.label.slice(0, -1)}
               </Text>
-              <TouchableOpacity testID="save-button" onPress={save}>
+              <TouchableOpacity testID="save-button" onPress={save} style={styles.modalCloseBtn}>
                 <Text style={{ color: COLORS.primary, fontWeight: "700", fontSize: 16 }}>Guardar</Text>
               </TouchableOpacity>
             </View>
@@ -319,6 +324,7 @@ const styles = StyleSheet.create({
     padding: 16, borderBottomWidth: 1, borderColor: COLORS.border,
   },
   modalTitle: { fontSize: 17, fontWeight: "700", color: COLORS.text },
+  modalCloseBtn: { padding: 8, minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   lbl: { fontSize: 11, fontWeight: "700", letterSpacing: 1, color: COLORS.textSecondary, marginTop: 8, marginBottom: 6 },
   input: {
     height: 52, backgroundColor: COLORS.bg2, borderWidth: 1, borderColor: COLORS.border,

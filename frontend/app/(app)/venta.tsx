@@ -276,11 +276,16 @@ export default function Venta() {
       <Modal visible={showCart} animationType="slide" onRequestClose={() => setShowCart(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }} testID="cart-modal">
           <View style={styles.modalHead}>
-            <TouchableOpacity onPress={() => setShowCart(false)}>
+            <TouchableOpacity
+              onPress={() => setShowCart(false)}
+              style={styles.modalCloseBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              testID="cart-close-button"
+            >
               <Ionicons name="close" size={26} color={COLORS.text} />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Carrito</Text>
-            <TouchableOpacity onPress={() => setCart([])}>
+            <TouchableOpacity onPress={() => setCart([])} style={styles.modalCloseBtn}>
               <Text style={{ color: COLORS.error, fontWeight: "600" }}>Vaciar</Text>
             </TouchableOpacity>
           </View>
@@ -389,11 +394,16 @@ export default function Venta() {
             style={{ flex: 1 }}
           >
             <View style={styles.modalHead}>
-              <TouchableOpacity onPress={() => setShowPay(false)}>
+              <TouchableOpacity
+                onPress={() => setShowPay(false)}
+                style={styles.modalCloseBtn}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                testID="payment-close-button"
+              >
                 <Ionicons name="arrow-back" size={26} color={COLORS.text} />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>Pago</Text>
-              <View style={{ width: 26 }} />
+              <View style={{ width: 44 }} />
             </View>
             <ScrollView contentContainerStyle={{ padding: 20 }}>
               <Text style={styles.payLabel}>TOTAL A COBRAR</Text>
@@ -533,11 +543,16 @@ export default function Venta() {
       <Modal visible={showScanner} animationType="slide" onRequestClose={() => setShowScanner(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.bg }} testID="scanner-modal">
           <View style={styles.modalHead}>
-            <TouchableOpacity onPress={() => setShowScanner(false)}>
+            <TouchableOpacity
+              onPress={() => setShowScanner(false)}
+              style={styles.modalCloseBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              testID="scanner-close-button"
+            >
               <Ionicons name="close" size={26} color={COLORS.text} />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Escanear código</Text>
-            <View style={{ width: 26 }} />
+            <View style={{ width: 44 }} />
           </View>
           <View style={{ padding: 24 }}>
             <View style={styles.scanFrame}>
@@ -607,6 +622,7 @@ const styles = StyleSheet.create({
     padding: 16, borderBottomWidth: 1, borderColor: COLORS.border,
   },
   modalTitle: { fontSize: 18, fontWeight: "700", color: COLORS.text },
+  modalCloseBtn: { padding: 8, minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   cartRow: {
     flexDirection: "row", alignItems: "center", paddingVertical: 12,
     borderBottomWidth: 1, borderColor: COLORS.border,
