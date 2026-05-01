@@ -51,8 +51,8 @@ export default function Login() {
             <View style={styles.logo}>
               <Ionicons name="storefront" size={36} color="#fff" />
             </View>
-            <Text style={styles.brand}>POS Pro</Text>
-            <Text style={styles.sub}>Punto de Venta Móvil</Text>
+            <Text style={styles.brand}>Lite Pos</Text>
+            <Text style={styles.sub}>Punto de Venta · Technovasolutions.mx</Text>
           </View>
 
           <View style={{ marginTop: 32 }}>

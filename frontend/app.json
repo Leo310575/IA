@@ -1,22 +1,47 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Lite Pos (local)",
+    "slug": "lite-pos-local",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
+    "scheme": "litepos",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "primaryColor": "#4F46E5",
+    "description": "POS móvil para Android e iOS — Technovasolutions.mx",
+    "owner": "technovasolutions",
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "mx.technovasolutions.litepos",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Permite escanear códigos de barras y QR de productos",
+        "NSBluetoothAlwaysUsageDescription": "Permite conectar la impresora de tickets",
+        "NSBluetoothPeripheralUsageDescription": "Permite imprimir tickets en impresora térmica",
+        "NSPhotoLibraryUsageDescription": "Permite seleccionar fotos para tus productos",
+        "NSContactsUsageDescription": "Permite enviar reportes a contactos del cliente"
+      }
     },
     "android": {
+      "package": "mx.technovasolutions.litepos",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#000"
+        "backgroundColor": "#0F172A"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "BLUETOOTH",
+        "BLUETOOTH_ADMIN",
+        "BLUETOOTH_CONNECT",
+        "BLUETOOTH_SCAN",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -31,15 +56,25 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000"
+          "backgroundColor": "#0F172A"
         }
       ],
       "expo-web-browser",
       "@react-native-community/datetimepicker",
-      "expo-mail-composer"
+      "expo-mail-composer",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permite escanear códigos de barras y QR de productos"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "company": "Technovasolutions.mx",
+      "website": "https://technovasolutions.mx/"
     }
   }
 }
