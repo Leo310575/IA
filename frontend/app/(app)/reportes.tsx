@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
@@ -11,27 +11,52 @@ const RANGES = [
   { id: "week", label: "7 días" },
   { id: "month", label: "30 días" },
   { id: "all", label: "Todo" },
+  { id: "custom", label: "Personalizado" },
 ];
 
-const getRange = (id) => {
+const fmtDate = (d) => {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const getRange = (id, customStart, customEnd) => {
   const now = new Date();
   const start = new Date(now);
-  if (id === "today") start.setHours(0, 0, 0, 0);
-  else if (id === "week") start.setDate(now.getDate() - 7);
-  else if (id === "month") start.setDate(now.getDate() - 30);
-  else return { start: null, end: null };
+  if (id === "today") {
+    start.setHours(0, 0, 0, 0);
+  } else if (id === "week") {
+    start.setDate(now.getDate() - 7);
+  } else if (id === "month") {
+    start.setDate(now.getDate() - 30);
+  } else if (id === "custom") {
+    if (!customStart) return { start: null, end: null };
+    const s = new Date(customStart + "T00:00:00");
+    const e = customEnd ? new Date(customEnd + "T23:59:59") : null;
+    return {
+      start: isNaN(s.getTime()) ? null : s.toISOString(),
+      end: e && !isNaN(e.getTime()) ? e.toISOString() : null,
+    };
+  } else {
+    return { start: null, end: null };
+  }
   return { start: start.toISOString(), end: null };
 };
 
 export default function Reportes() {
   const { user, token } = useAuth();
   const [range, setRange] = useState("today");
+  const today = new Date();
+  const monthAgo = new Date(); monthAgo.setDate(today.getDate() - 30);
+  const [customStart, setCustomStart] = useState(fmtDate(monthAgo));
+  const [customEnd, setCustomEnd] = useState(fmtDate(today));
   const [data, setData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!user?.store_id || !token) return;
-    const { start, end } = getRange(range);
+    const { start, end } = getRange(range, customStart, customEnd);
     let q = `?store_id=${user.store_id}`;
     if (start) q += `&start=${start}`;
     if (end) q += `&end=${end}`;
@@ -39,12 +64,26 @@ export default function Reportes() {
       const d = await apiFetch(`/api/reports/summary${q}`, {}, token);
       setData(d);
     } catch (_e) {}
-  }, [range, user, token]);
+  }, [range, user, token, customStart, customEnd]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
-  useEffect(() => { load(); }, [range]);
+  useEffect(() => {
+    if (range !== "custom") load();
+  }, [range]);
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
+
+  const applyCustom = () => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(customStart) || !/^\d{4}-\d{2}-\d{2}$/.test(customEnd)) {
+      Alert.alert("Formato inválido", "Usa el formato YYYY-MM-DD (ej. 2026-01-15)");
+      return;
+    }
+    if (new Date(customStart) > new Date(customEnd)) {
+      Alert.alert("Rango inválido", "La fecha inicial debe ser menor o igual a la final");
+      return;
+    }
+    load();
+  };
 
   return (
     <SafeAreaView style={styles.c} testID="reportes-screen">
@@ -68,6 +107,45 @@ export default function Reportes() {
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {range === "custom" && (
+          <View style={styles.customBox} testID="custom-range-box">
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.lbl}>DESDE</Text>
+                <TextInput
+                  testID="custom-start-input"
+                  style={styles.dateInput}
+                  value={customStart}
+                  onChangeText={setCustomStart}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={COLORS.textMuted}
+                  keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "default"}
+                  // @ts-ignore web only - renders native HTML date picker on web
+                  type={Platform.OS === "web" ? "date" : undefined}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.lbl}>HASTA</Text>
+                <TextInput
+                  testID="custom-end-input"
+                  style={styles.dateInput}
+                  value={customEnd}
+                  onChangeText={setCustomEnd}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={COLORS.textMuted}
+                  keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "default"}
+                  // @ts-ignore
+                  type={Platform.OS === "web" ? "date" : undefined}
+                />
+              </View>
+            </View>
+            <TouchableOpacity testID="custom-apply" style={styles.applyBtn} onPress={applyCustom}>
+              <Ionicons name="checkmark" size={18} color="#fff" />
+              <Text style={styles.applyTxt}>Aplicar rango</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.bigCard}>
           <Text style={styles.bigLabel}>VENTAS</Text>
@@ -189,4 +267,18 @@ const styles = StyleSheet.create({
   lineSub: { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
   lineAmt: { fontSize: 14, fontWeight: "700", color: COLORS.text },
   empty: { textAlign: "center", color: COLORS.textMuted, padding: 16 },
+  customBox: {
+    marginTop: 12, padding: 14, backgroundColor: COLORS.bg, borderRadius: 12,
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  lbl: { fontSize: 11, fontWeight: "700", letterSpacing: 1, color: COLORS.textSecondary, marginBottom: 6 },
+  dateInput: {
+    height: 48, backgroundColor: COLORS.bg2, borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 10, paddingHorizontal: 12, color: COLORS.text, fontSize: 15,
+  },
+  applyBtn: {
+    marginTop: 12, height: 48, borderRadius: 10, backgroundColor: COLORS.primary,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+  },
+  applyTxt: { color: "#fff", fontWeight: "700", fontSize: 14 },
 });
