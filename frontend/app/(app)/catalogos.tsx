@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import { useAuth, apiFetch } from "../../src/auth";
 import { useTheme } from "../../src/theme";
 
@@ -130,8 +131,7 @@ export default function Catalogos() {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.6,
-        base64: true,
+        quality: 0.8,
       };
       const result = fromCamera
         ? await ImagePicker.launchCameraAsync(opts)
@@ -139,8 +139,24 @@ export default function Catalogos() {
       if (result.canceled) return;
       const a = result.assets?.[0];
       if (!a) return;
-      const dataUri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
+      // Compress + resize to max 600px width
+      const manipulated = await ImageManipulator.manipulateAsync(
+        a.uri,
+        [{ resize: { width: 600 } }],
+        { compress: 0.55, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+      );
+      const dataUri = manipulated.base64
+        ? `data:image/jpeg;base64,${manipulated.base64}`
+        : manipulated.uri;
+      // Approx size in KB (base64 length * 0.75 / 1024)
+      const sizeKb = manipulated.base64 ? Math.round((manipulated.base64.length * 0.75) / 1024) : 0;
       setForm((f) => ({ ...f, photo: dataUri }));
+      if (sizeKb > 0) {
+        // soft warn if huge
+        if (sizeKb > 350) {
+          Alert.alert("Imagen guardada", `Tamaño: ${sizeKb} KB. Considera elegir una foto más simple.`);
+        }
+      }
     } catch (e) {
       Alert.alert("Error", e.message || "No se pudo cargar la imagen");
     }
