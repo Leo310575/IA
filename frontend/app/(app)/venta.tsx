@@ -72,16 +72,29 @@ export default function Venta() {
   };
 
   const addProduct = (product) => {
+    const stockAvailable = Number(product.stock || 0);
+    if (stockAvailable <= 0) {
+      Alert.alert("Sin existencias", `"${product.name}" no tiene stock disponible.`);
+      return;
+    }
     setCart((prev) => {
       const idx = prev.findIndex((c) => c.product.id === product.id && !c.is_wholesale);
       if (idx >= 0 && product.unit_type === "pieza") {
         const next = [...prev];
-        const q = next[idx].quantity + 1;
-        const { subtotal, unit_price } = computeLine(product, q, false);
-        next[idx] = { ...next[idx], quantity: q, subtotal, unit_price };
+        const newQ = next[idx].quantity + 1;
+        if (newQ > stockAvailable) {
+          Alert.alert("Stock insuficiente", `Solo hay ${stockAvailable} ${product.unit_type} de "${product.name}".`);
+          return prev;
+        }
+        const { subtotal, unit_price } = computeLine(product, newQ, false);
+        next[idx] = { ...next[idx], quantity: newQ, subtotal, unit_price };
         return next;
       }
-      const initialQty = product.unit_type === "pieza" ? 1 : 1;
+      const initialQty = 1;
+      if (initialQty > stockAvailable) {
+        Alert.alert("Stock insuficiente", `Solo hay ${stockAvailable} ${product.unit_type} de "${product.name}".`);
+        return prev;
+      }
       const { subtotal, unit_price } = computeLine(product, initialQty, false);
       return [...prev, { product, quantity: initialQty, is_wholesale: false, subtotal, unit_price }];
     });
@@ -92,6 +105,11 @@ export default function Venta() {
       const next = [...prev];
       const it = next[idx];
       if (qty <= 0) { next.splice(idx, 1); return next; }
+      const stockAvailable = Number(it.product.stock || 0);
+      if (qty > stockAvailable) {
+        Alert.alert("Stock insuficiente", `Solo hay ${stockAvailable} ${it.product.unit_type} de "${it.product.name}".`);
+        return prev;
+      }
       const { subtotal, unit_price } = computeLine(it.product, qty, it.is_wholesale);
       next[idx] = { ...it, quantity: qty, subtotal, unit_price };
       return next;
@@ -195,30 +213,39 @@ export default function Venta() {
     setPaymentMethod("efectivo");
   };
 
-  const renderProduct = ({ item }) => (
-    <TouchableOpacity
-      testID={`product-card-${item.id}`}
-      style={styles.pCard}
-      onPress={() => addProduct(item)}
-      activeOpacity={0.8}
-    >
-      {item.photo ? (
-        <Image source={{ uri: item.photo }} style={styles.pImg} />
-      ) : (
-        <View style={[styles.pImg, { backgroundColor: COLORS.bg3, alignItems: "center", justifyContent: "center" }]}>
-          <Ionicons name="cube-outline" size={28} color={COLORS.textMuted} />
+  const renderProduct = ({ item }) => {
+    const outOfStock = Number(item.stock || 0) <= 0;
+    return (
+      <TouchableOpacity
+        testID={`product-card-${item.id}`}
+        style={[styles.pCard, outOfStock && { opacity: 0.55 }]}
+        onPress={() => addProduct(item)}
+        activeOpacity={0.8}
+        disabled={outOfStock}
+      >
+        {item.photo ? (
+          <Image source={{ uri: item.photo }} style={styles.pImg} />
+        ) : (
+          <View style={[styles.pImg, { backgroundColor: COLORS.bg3, alignItems: "center", justifyContent: "center" }]}>
+            <Ionicons name="cube-outline" size={28} color={COLORS.textMuted} />
+          </View>
+        )}
+        {outOfStock && (
+          <View style={styles.outBadge}>
+            <Text style={styles.outBadgeTxt}>SIN STOCK</Text>
+          </View>
+        )}
+        <Text style={styles.pName} numberOfLines={2}>{item.name}</Text>
+        <View style={styles.pBottom}>
+          <Text style={styles.pPrice}>${item.price?.toFixed(2)}</Text>
+          <Text style={styles.pUnit}>/ {item.unit_type}</Text>
         </View>
-      )}
-      <Text style={styles.pName} numberOfLines={2}>{item.name}</Text>
-      <View style={styles.pBottom}>
-        <Text style={styles.pPrice}>${item.price?.toFixed(2)}</Text>
-        <Text style={styles.pUnit}>/ {item.unit_type}</Text>
-      </View>
-      <Text style={[styles.pStock, item.stock <= 5 && { color: COLORS.error }]}>
-        Stock: {item.stock} {item.unit_type}
-      </Text>
-    </TouchableOpacity>
-  );
+        <Text style={[styles.pStock, item.stock <= 5 && { color: COLORS.error }]}>
+          Stock: {item.stock} {item.unit_type}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.c} testID="venta-screen">
@@ -609,6 +636,11 @@ const styles = StyleSheet.create({
   pPrice: { fontSize: 18, fontWeight: "800", color: COLORS.text },
   pUnit: { fontSize: 12, color: COLORS.textSecondary, marginLeft: 4 },
   pStock: { fontSize: 11, color: COLORS.textMuted, marginTop: 2 },
+  outBadge: {
+    position: "absolute", top: 14, right: 14, backgroundColor: COLORS.error,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
+  },
+  outBadgeTxt: { color: "#fff", fontSize: 10, fontWeight: "800", letterSpacing: 1 },
   empty: { textAlign: "center", color: COLORS.textMuted, marginTop: 40 },
   fab: {
     position: "absolute", bottom: 16, left: 16, right: 16,

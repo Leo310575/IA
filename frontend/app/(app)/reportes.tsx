@@ -225,6 +225,37 @@ export default function Reportes() {
             </View>
           ))}
         </View>
+
+        <Text style={styles.sectTitle}>INVENTARIO COMPLETO ({data?.inventory_count || 0})</Text>
+        <View style={styles.listCard}>
+          {(data?.inventory || []).map((p) => {
+            const stock = Number(p.stock || 0);
+            const lowFlag = stock <= 5;
+            const outFlag = stock <= 0;
+            return (
+              <View key={p.id} style={styles.lineRow} testID={`inv-row-${p.id}`}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.lineName}>{p.name}</Text>
+                  <Text style={styles.lineSub}>
+                    {p.category || "General"} • ${Number(p.price || 0).toFixed(2)} / {p.unit_type}
+                    {p.barcode ? `  •  ${p.barcode}` : ""}
+                  </Text>
+                </View>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text style={[styles.lineAmt, outFlag ? { color: COLORS.error } : lowFlag ? { color: COLORS.warning } : null]}>
+                    {stock} {p.unit_type}
+                  </Text>
+                  <Text style={styles.tiny}>
+                    Valor: ${(stock * Number(p.cost || 0)).toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+          {(!data?.inventory || data.inventory.length === 0) && (
+            <Text style={styles.empty}>Sin productos</Text>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

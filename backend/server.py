@@ -358,6 +358,20 @@ async def insert_sale(payload: SaleIn, user_id: str):
 
 @api_router.post("/sales")
 async def create_sale(payload: SaleIn, user: dict = Depends(get_current_user)):
+    # Validate stock before creating sale (skip if it's a duplicate via client_id)
+    if payload.client_id:
+        existing = await db.sales.find_one({"client_id": payload.client_id})
+        if existing:
+            return {"id": existing["id"], "deduped": True}
+    for it in payload.items:
+        product = await db.products.find_one({"id": it.product_id}, {"_id": 0})
+        if not product:
+            raise HTTPException(status_code=400, detail=f"Producto no encontrado: {it.name}")
+        if float(product.get("stock", 0)) < float(it.quantity):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Stock insuficiente para '{product['name']}'. Disponible: {product.get('stock', 0)} {product.get('unit_type', '')}"
+            )
     return await insert_sale(payload, user["id"])
 
 
@@ -466,6 +480,7 @@ async def report_summary(
     products = await db.products.find({"store_id": store_id} if store_id else {}, {"_id": 0}).to_list(2000)
     inventory_value = sum(float(p.get("stock", 0)) * float(p.get("cost", 0)) for p in products)
     low_stock = [p for p in products if float(p.get("stock", 0)) <= 5]
+    inventory = sorted(products, key=lambda p: p.get("name", ""))
 
     return {
         "sales_count": len(sales),
@@ -479,6 +494,8 @@ async def report_summary(
         "inventory_value": inventory_value,
         "low_stock_count": len(low_stock),
         "low_stock": low_stock[:10],
+        "inventory": inventory,
+        "inventory_count": len(inventory),
     }
 
 
