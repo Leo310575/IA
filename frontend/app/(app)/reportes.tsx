@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Platform, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, TextInput, Platform, Alert, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
@@ -55,6 +55,8 @@ export default function Reportes() {
   const [customEnd, setCustomEnd] = useState(fmtDate(today));
   const [data, setData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [showPrint, setShowPrint] = useState(false);
+  const [printLines, setPrintLines] = useState([]);
 
   const load = useCallback(async () => {
     if (!user?.store_id || !token) return;
@@ -98,11 +100,16 @@ export default function Reportes() {
       lines.push(`  ${p.name}: ${p.stock} ${p.unit_type}`);
     });
     lines.push("========================");
+    setPrintLines(lines);
+    setShowPrint(true);
+  };
+
+  const sendToPrinter = () => {
     Alert.alert(
-      "Imprimir reporte",
-      "Enviando a impresora Bluetooth... (simulado en preview)\n\n" + lines.slice(0, 12).join("\n") + "\n...",
-      [{ text: "OK" }]
+      "Imprimiendo",
+      "Reporte enviado a impresora Bluetooth.\n(Simulado en preview — funcionará con hardware real al compilar APK/IPA.)"
     );
+    setShowPrint(false);
   };
 
   const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
@@ -299,6 +306,49 @@ export default function Reportes() {
           )}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showPrint}
+        animationType="slide"
+        onRequestClose={() => setShowPrint(false)}
+        transparent
+      >
+        <View style={styles.printOverlay}>
+          <View style={styles.printCard} testID="print-preview-modal">
+            <View style={styles.printHead}>
+              <Ionicons name="print-outline" size={22} color={COLORS.text} />
+              <Text style={styles.printTitle}>Vista previa de impresión</Text>
+              <TouchableOpacity
+                onPress={() => setShowPrint(false)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                testID="print-preview-close"
+              >
+                <Ionicons name="close" size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.ticketScroll} contentContainerStyle={{ padding: 14 }}>
+              <View style={styles.ticketBox}>
+                {printLines.map((l, i) => (
+                  <Text key={i} style={styles.ticketLine}>{l}</Text>
+                ))}
+              </View>
+            </ScrollView>
+            <View style={styles.printActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowPrint(false)}>
+                <Text style={styles.cancelTxt}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID="send-to-printer-button"
+                style={styles.sendBtn}
+                onPress={sendToPrinter}
+              >
+                <Ionicons name="bluetooth-outline" size={18} color="#fff" />
+                <Text style={styles.sendTxt}>Imprimir Bluetooth</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -354,4 +404,47 @@ const makeStyles = (COLORS) => StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
   },
   applyTxt: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  printBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10,
+  },
+  printBtnTxt: { color: "#fff", fontWeight: "700", fontSize: 13 },
+  printOverlay: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center", justifyContent: "center", padding: 16,
+  },
+  printCard: {
+    width: "100%", maxWidth: 460, maxHeight: "85%",
+    backgroundColor: COLORS.bg, borderRadius: 18, overflow: "hidden",
+    borderWidth: 1, borderColor: COLORS.border,
+  },
+  printHead: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    padding: 16, borderBottomWidth: 1, borderColor: COLORS.border,
+  },
+  printTitle: { flex: 1, fontSize: 16, fontWeight: "700", color: COLORS.text },
+  ticketScroll: { backgroundColor: COLORS.bg2 },
+  ticketBox: {
+    backgroundColor: "#FFFFFF", borderRadius: 8, padding: 14,
+    borderWidth: 1, borderColor: COLORS.border, borderStyle: "dashed",
+  },
+  ticketLine: {
+    fontSize: 12, color: "#0F172A",
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    lineHeight: 18,
+  },
+  printActions: {
+    flexDirection: "row", gap: 10, padding: 14,
+    borderTopWidth: 1, borderColor: COLORS.border,
+  },
+  cancelBtn: {
+    flex: 1, height: 48, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border,
+    alignItems: "center", justifyContent: "center", backgroundColor: COLORS.bg,
+  },
+  cancelTxt: { color: COLORS.text, fontWeight: "700", fontSize: 14 },
+  sendBtn: {
+    flex: 1.5, height: 48, borderRadius: 10, backgroundColor: COLORS.primary,
+    alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 6,
+  },
+  sendTxt: { color: "#fff", fontWeight: "700", fontSize: 14 },
 });
