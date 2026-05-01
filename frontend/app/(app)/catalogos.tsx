@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert,
-  ScrollView, KeyboardAvoidingView, Platform, Switch,
+  ScrollView, KeyboardAvoidingView, Platform, Switch, Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 import { useAuth, apiFetch } from "../../src/auth";
 import { useTheme } from "../../src/theme";
 
@@ -110,6 +111,47 @@ export default function Catalogos() {
           } catch (e) { Alert.alert("Error", e.message); }
         },
       },
+    ]);
+  };
+
+  const pickProductImage = async (fromCamera = false) => {
+    try {
+      let perm;
+      if (fromCamera) {
+        perm = await ImagePicker.requestCameraPermissionsAsync();
+      } else {
+        perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      }
+      if (!perm.granted) {
+        Alert.alert("Permiso denegado", "No se otorgó acceso. Habilítalo en Ajustes del dispositivo.");
+        return;
+      }
+      const opts = {
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.6,
+        base64: true,
+      };
+      const result = fromCamera
+        ? await ImagePicker.launchCameraAsync(opts)
+        : await ImagePicker.launchImageLibraryAsync(opts);
+      if (result.canceled) return;
+      const a = result.assets?.[0];
+      if (!a) return;
+      const dataUri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
+      setForm((f) => ({ ...f, photo: dataUri }));
+    } catch (e) {
+      Alert.alert("Error", e.message || "No se pudo cargar la imagen");
+    }
+  };
+
+  const choosePhotoSource = () => {
+    Alert.alert("Foto del producto", "¿De dónde quieres cargar la imagen?", [
+      { text: "Galería", onPress: () => pickProductImage(false) },
+      { text: "Cámara", onPress: () => pickProductImage(true) },
+      { text: "Quitar", style: "destructive", onPress: () => setForm((f) => ({ ...f, photo: "" })) },
+      { text: "Cancelar", style: "cancel" },
     ]);
   };
 
@@ -223,6 +265,32 @@ export default function Catalogos() {
                     </>
                   )}
                   <Field label="URL de foto (opcional)" value={form.photo} onChangeText={(v) => setForm({ ...form, photo: v })} />
+                  <View style={styles.photoBox}>
+                    {form.photo ? (
+                      <Image source={{ uri: form.photo }} style={styles.photoPreview} />
+                    ) : (
+                      <View style={[styles.photoPreview, { alignItems: "center", justifyContent: "center" }]}>
+                        <Ionicons name="image-outline" size={36} color={COLORS.textMuted} />
+                        <Text style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 4 }}>Sin foto</Text>
+                      </View>
+                    )}
+                    <View style={styles.photoActions}>
+                      <TouchableOpacity testID="pick-photo-gallery" style={styles.photoBtn} onPress={() => pickProductImage(false)}>
+                        <Ionicons name="images-outline" size={18} color={COLORS.text} />
+                        <Text style={styles.photoBtnTxt}>Galería</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity testID="pick-photo-camera" style={styles.photoBtn} onPress={() => pickProductImage(true)}>
+                        <Ionicons name="camera-outline" size={18} color={COLORS.text} />
+                        <Text style={styles.photoBtnTxt}>Cámara</Text>
+                      </TouchableOpacity>
+                      {!!form.photo && (
+                        <TouchableOpacity testID="pick-photo-remove" style={styles.photoBtn} onPress={() => setForm({ ...form, photo: "" })}>
+                          <Ionicons name="trash-outline" size={18} color={COLORS.error} />
+                          <Text style={[styles.photoBtnTxt, { color: COLORS.error }]}>Quitar</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
                 </>
               )}
               {tab === "companies" && (
@@ -348,4 +416,18 @@ const makeStyles = (COLORS) => StyleSheet.create({
   choiceActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   choiceTxt: { color: COLORS.text, fontWeight: "600", fontSize: 13 },
   row2: { flexDirection: "row", alignItems: "center" },
+  photoBox: {
+    marginBottom: 14, padding: 12, borderRadius: 12, backgroundColor: COLORS.bg2,
+    borderWidth: 1, borderColor: COLORS.border, alignItems: "center",
+  },
+  photoPreview: {
+    width: 140, height: 140, borderRadius: 12, backgroundColor: COLORS.bg3,
+  },
+  photoActions: { flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap", justifyContent: "center" },
+  photoBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
+    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.bg,
+  },
+  photoBtnTxt: { color: COLORS.text, fontWeight: "600", fontSize: 12 },
 });
